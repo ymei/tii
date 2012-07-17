@@ -159,6 +159,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to establish a socket.\n");
         return EXIT_FAILURE;
     }
+    if(host) {free(host); host = NULL;}
+    if(port) {free(port); port = NULL;}
+
     if(sfd > maxfd) maxfd = sfd;
 
     if((isTty = isatty(STDIN_FILENO)) != 0) {

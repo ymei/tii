@@ -2,11 +2,13 @@ NAME
         tii{s,c}
 
 SYNOPSIS
-        TIIADDR="host:port" tiis program [options]
-        TIIADDR="host:port" tiic
+        Terminal 1:
+                TIIADDR="host:port" tiis program [options]
+        Terminal 2:
+                TIIADDR="host:port" tiic
 
 ENVIRONMENT
-        TIIADDR.  Defaults to "localhost:7115"
+        TIIADDR.  Defaults to "localhost:7115".
 
 DESCRIPTION
 
@@ -31,6 +33,12 @@ gnuplot, in such case gnuplot will be the slave process running under
 `tiis').  The communication will be shown in the terminal of `tiis'.
 When necessary, human intervention can be typed into the terminal of
 `tiis' directly.
+
+    Besides using `tiic', it is equally convenient to connect to
+`tiis' host:port directly via TCP, from any language/program of
+choice.  Instead of using `popen', a network socket is used to control
+the slave process and the message flow is shown in the terminal of
+`tiis' and can be altered manually.
 
     Environment variable `TIIADDR' controls the host and port to
 listen on (or to connect to).  TIIADDR="localhost:7115" is the default
