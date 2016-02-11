@@ -43,5 +43,5 @@ the slave process and the message flow is shown in the terminal of
     Environment variable `TIIADDR' controls the host and port to
 listen on (or to connect to).  TIIADDR="localhost:7115" is the default
 which means it listens on localhost at port 7115.  If TIIADDR=":7115"
-or "*:7115", it will listen on any ip address the host posses.  `7115'
+or "*:7115", it will listen on any ip address on the host.  `7115'
 graphically looks like `tiis'.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012
+ * Copyright (c) 2011 - 2016
  *
  *     Yuan Mei
  *
@@ -36,6 +36,8 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <netdb.h>
 
 #include <err.h>
@@ -45,8 +47,10 @@
 #ifdef __linux /* on linux */
 #include <pty.h>
 #include <utmp.h>
-#else /* (__APPLE__ & __MACH__) */
-#include <util.h> /* this is for mac or bsd */
+#elif defined(__FreeBSD__)
+#include <libutil.h>
+#else /* defined(__APPLE__) && defined(__MACH__) */
+#include <util.h>
 #endif
 
 #include <paths.h>
@@ -118,8 +122,8 @@ static int get_socket(char *host, char *port)
         sockfd = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
         if(sockfd < 0) continue;
         sockopt = 1;
-        if(setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (char*)&sockopt, sizeof(sockopt)) == -1) {
-            close(sockopt);
+        if(setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &sockopt, sizeof(sockopt)) == -1) {
+            close(sockfd);
             warn("setsockopt");
             continue;
         }
