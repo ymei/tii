@@ -1,23 +1,25 @@
 OSTYPE = $(shell uname)
 ARCH   = $(shell uname -m)
 ##################################### Defaults ################################
-CC             := gcc
-INCLUDE        := -I.
-CFLAGS         := -Wall -std=gnu99 -pedantic -O2
+CC             := clang
+INCLUDE        := -I. -I/usr/local/include
+CFLAGS         := -Wall -Wno-overlength-strings -Wpedantic -std=gnu11 -fPIC -O3
 CFLAGS_32      := -m32
-SHLIB_CFLAGS   := -fPIC -shared
+SHLIB_CFLAGS   := -shared
 SHLIB_EXT      := .so
 LIBS           := -lutil
 LDFLAGS        :=
 ############################# Library add-ons #################################
-INCLUDE += -I/opt/local/include -I/usr/local/include
+INCLUDE += -I/opt/local/include
 #LIBS    += -L/opt/local/lib -L/usr/local/lib -lpthread -lhdf5
+CFLAGS  += -DH5_NO_DEPRECATED_SYMBOLS
 #GSLLIBS  = $(shell gsl-config --libs)
 GLLIBS   =
 ############################# OS & ARCH specifics #############################
 ifneq ($(OSTYPE), Linux)
   ifeq ($(OSTYPE), Darwin)
     CC            = clang
+    CFLAGS       += -Wno-gnu-zero-variadic-macro-arguments
     GLLIBS       += -framework GLUT -framework OpenGL -framework Cocoa
     SHLIB_CFLAGS := -dynamiclib
     SHLIB_EXT    := .dylib
@@ -28,7 +30,7 @@ ifneq ($(OSTYPE), Linux)
     CC      = clang
     GLLIBS += -lGL -lGLU -lglut
   else ifeq ($(OSTYPE), SunOS)
-    CFLAGS     := -Wall
+    CFLAGS := -c -Wall -std=gnu99 -Wpedantic
   else
     # Let's assume this is win32
     SHLIB_EXT  := .dll
@@ -54,10 +56,11 @@ endif
 EXE_TARGETS = tiic tiis
 DEBUG_EXE_TARGETS = tii
 
-.PHONY: exe_targets shlib_targets debug_exe_targets clean
+default: exe_targets
 exe_targets: $(EXE_TARGETS)
 shlib_targets: $(SHLIB_TARGETS)
 debug_exe_targets: $(DEBUG_EXE_TARGETS)
+.PHONY: default exe_targets shlib_targets debug_exe_targets clean
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
@@ -69,4 +72,3 @@ tii: tii.c tii.h
 	$(CC) $(CFLAGS) -DTII_DEBUG_ENABLE_MAIN -o $@ $<
 clean:
 	rm -f *.o *.so *.dylib *.dll *.bundle
-

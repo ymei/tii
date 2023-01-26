@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 - 2016
+ * Copyright (c) 2011 - 2023
  *
  *     Yuan Mei
  *
@@ -64,17 +64,15 @@
 
 #include "tii.h"
 
-#define error_printf(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
-
-static int sfd;
+static int sfd=-1;
 static struct termios tt;
 static int isTty;
 
 static void reset_and_exit(int status)
 {
-    if(isTty) /* recover the controlling terminal's original state */
+    if (isTty) /* recover the controlling terminal's original state */
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
-    if(sfd>=0)
+    if (sfd>=0)
         close(sfd);
     exit(status);
 }
@@ -96,7 +94,7 @@ static int connect_retry(int sockfd, const struct sockaddr *addr, socklen_t alen
     return(-1);
 }
 
-static int get_socket(char *host, char *port)
+static int get_socket_connect(char *host, char *port)
 {
     int status;
     struct addrinfo addrHint, *addrList, *ap;
@@ -113,21 +111,21 @@ static int get_socket(char *host, char *port)
     addrHint.ai_next = NULL;
 
     status = getaddrinfo(host, port, &addrHint, &addrList);
-    if(status < 0) {
-        error_printf("getaddrinfo: %s\n", gai_strerror(status));
+    if (status < 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return status;
     }
 
-    for(ap=addrList; ap!=NULL; ap=ap->ai_next) {
+    for (ap=addrList; ap!=NULL; ap=ap->ai_next) {
         sockfd = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
-        if(sockfd < 0) continue;
+        if (sockfd < 0) continue;
         sockopt = 1;
-        if(setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &sockopt, sizeof(sockopt)) == -1) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &sockopt, sizeof(sockopt)) == -1) {
             close(sockfd);
             warn("setsockopt");
             continue;
         }
-        if(connect_retry(sockfd, ap->ai_addr, ap->ai_addrlen) < 0) {
+        if (connect_retry(sockfd, ap->ai_addr, ap->ai_addrlen) < 0) {
             close(sockfd);
             warn("connect");
             continue;
@@ -135,8 +133,8 @@ static int get_socket(char *host, char *port)
             break; /* success */
         }
     }
-    if(ap == NULL) { /* No address succeeded */
-        error_printf("Could not connect, tried %s:%s\n", host, port);
+    if (ap == NULL) { /* No address succeeded */
+        fprintf(stderr, "Could not connect, tried %s:%s\n", host, port);
         return -1;
     }
     freeaddrinfo(addrList);
@@ -158,7 +156,10 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    sfd = get_socket(host, port);
+    signal(SIGKILL, reset_and_exit);
+    signal(SIGTERM, reset_and_exit);
+
+    sfd = get_socket_connect(host, port);
     if(sfd < 0) {
         fprintf(stderr, "Failed to establish a socket.\n");
         return EXIT_FAILURE;
@@ -172,9 +173,9 @@ int main(int argc, char **argv)
         /* if invoked under a true tty, save the parameters of the controlling terminal
          */
         if(tcgetattr(STDIN_FILENO, &tt) == -1)
-            err(1, "tcgetattr");
+            err(EXIT_FAILURE, "tcgetattr");
         if(ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1)
-            err(1, "ioctl");
+            err(EXIT_FAILURE, "ioctl");
     }
 
     if(isTty) { /* set the controlling terminal to raw mode, no echo. */
@@ -201,7 +202,7 @@ int main(int argc, char **argv)
             nrw = read(sfd, ibuf, sizeof(ibuf));
             if(nrw < 0)
                 break;
-            if(nrw == 0) { /* network is closed (probably) */
+            if(nrw == 0) { /* network is closed */
                 break;
             }
             (void)write(STDOUT_FILENO, ibuf, nrw);

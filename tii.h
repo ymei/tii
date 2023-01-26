@@ -1,11 +1,13 @@
 #ifndef __TII_H__
 #define __TII_H__
 
+#define error_printf(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+
 #define ENV_VAR_NAME "TIIADDR"
 #define ENV_VAR_DEFAULT "localhost:7115" /* default allow connection to localhost */
 #define ENV_VAL_MAXLEN 4096
 
-/* get host and port info from environment variable.
+/** Get host and port info from environment variable.
  * return -1 when error,
  * return 0 when the ENV is found and used,
  * return 1 when the ENV is not found and the default is used.
